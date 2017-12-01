@@ -16,6 +16,9 @@ To run the Logstashtester you first need to have
 running on your system.
 
 # TODO
+* Customize user logstash file for testing before executing it
+* Hint user if `docker` is not available
+
+## DONE
 * Add command line parsing
 * Actually use the user specified logstash config file
-* Hint user if `docker` is not available

@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 
-# echo line | logstashtester logstash.conf --type=apache
+"""
+EXAMPLE: logstashtester logstash.conf --type=apache
+
+--type is optional
+
+Log lines will be read from stdin.
+"""
 
 import os
+import sys
 import subprocess
 
 
@@ -48,4 +55,26 @@ def run_logstash(config, input_type=None):
 
 
 if __name__ == "__main__":
-    run_logstash("")
+    args = sys.argv[:]
+    args.pop(0)  # Remove script name from args
+    if not 1 <= len(args) <= 2:
+        sys.stderr.write(__doc__)
+        exit(1)
+
+    if args[0] in ['-h', '--help']:
+        print(__doc__)
+        exit(0)
+
+    logstash_conf_name = args.pop(0)
+    input_type = None
+    if args:
+        type_arg = args.pop(0)
+        if not type_arg.startswith('--type='):
+            sys.stderr.write("ERROR: Unknown argument <" + type_arg + ">\n")
+            sys.stderr.write(__doc__)
+            sys.stderr.write("\n")
+            exit(1)
+        input_type = type_arg[len('--type='):]
+
+    with open(logstash_conf_name, 'r') as logstash_conf:
+        run_logstash(logstash_conf.read(), input_type)
