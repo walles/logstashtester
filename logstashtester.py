@@ -13,6 +13,61 @@ import sys
 import subprocess
 
 
+def braces_delta(line):
+    # type: (str) -> int
+    line = line.strip()
+    if line.startswith('#'):
+        # Comment line, never mind
+        return 0
+
+    delta = 0
+    for char in line:
+        if char == '{':
+            delta += 1
+        if char == '}':
+            delta -= 1
+
+    return delta
+
+
+def strip_config(config):
+    # type: (str) -> str
+    """
+    Removes any input or output sections from a logstash config file.
+    """
+    braces_opened = 0
+    is_stripping = False
+    stripped = ""
+    for line in config.splitlines(True):
+        if line.strip().startswith("input"):
+            # Strip out the input section
+            assert not is_stripping
+            assert braces_opened == 0
+            is_stripping = True
+
+        if line.strip().startswith("output"):
+            # Strip out the output section
+            assert not is_stripping
+            assert braces_opened == 0
+            is_stripping = True
+
+        braces_opened += braces_delta(line)
+        if is_stripping and braces_opened == 0:
+            # Got to the end of the section we're stripping out
+            is_stripping = False
+
+            # Skip closing brace of the section we're stripping
+            continue
+
+        if is_stripping:
+            # Skip this line since we're stripping
+            continue
+
+        stripped += line
+
+    return stripped
+
+
 def customize_config(config, input_type):
     # type: (str, str) -> str
     """
@@ -22,8 +77,28 @@ def customize_config(config, input_type):
     * Configures input from stdin
     * Sets output to JSON format
     """
-    # FIXME: Actually customize the config
-    return config
+    customized_config = strip_config(config)
+
+    type_line = ""
+    if input_type:
+        type_line = 'type => "{}"'.format(input_type)
+    customized_config += """
+
+    input {
+      stdin {
+        codec => line
+        %s
+      }
+    }
+
+    output {
+      stdout {
+        codec => rubydebug
+      }
+    }
+    """ % (type_line,)
+
+    return customized_config
 
 
 def run_logstash(config, input_type=None):
@@ -33,12 +108,15 @@ def run_logstash(config, input_type=None):
         "-e", customize_config(config, input_type),
     ]
 
-    docker_cmd = ['docker', 'run']
+    docker_cmd = ['docker', 'run', '--rm']
     if os.isatty(0):
         print("Reading logs from stdin, press CTRL-D to finish")
         print("")
         print("Logstash starting...")
-        docker_cmd.append('-it')
+        docker_cmd.append('-t')
+    else:
+        docker_cmd.append('--sig-proxy=true')
+    docker_cmd.append('-i')
     docker_cmd.append('logstash:2.4.1-alpine')
 
     env = os.environ.copy()
