@@ -3,6 +3,9 @@
 Tests [logstash](www.elastic.co/products/logstash) configurations with example
 input.
 
+Prints on stdout what logstash would have sent to Elasticsearch for
+the given config file and input.
+
 Syntax: `logstashtester logstash.conf [--type=<type>]`.
 
 Logstash config is read from `logstash.conf`, and log lines from `STDIN`.
