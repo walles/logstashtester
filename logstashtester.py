@@ -117,7 +117,7 @@ def run_logstash(config, input_type=None):
     else:
         docker_cmd.append('--sig-proxy=true')
     docker_cmd.append('-i')
-    docker_cmd.append('logstash:2.4.1-alpine')
+    docker_cmd.append('logstash:5-alpine')
 
     env = os.environ.copy()
     # From: http://stackoverflow.com/a/2325109/473672
