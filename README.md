@@ -1,6 +1,6 @@
 # Logstashtester
 
-Tests [logstash](www.elastic.co/products/logstash) configurations with example
+Tests [logstash](https://www.elastic.co/products/logstash) configurations with example
 input.
 
 Prints on stdout what logstash would have sent to Elasticsearch for
